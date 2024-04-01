@@ -1,0 +1,11 @@
+apiVersion: v2
+name: generic
+description: A Helm chart for in-house built apps.
+maintainers:
+  - name: Alex
+
+type: application
+
+version: 0.0.4
+
+appVersion: "0.0.1"

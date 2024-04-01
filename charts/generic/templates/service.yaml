@@ -1,0 +1,43 @@
+{{- if .Values.service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "generic.fullname" . }}
+  annotations:
+    {{- if .Values.serviceAnnotations }}
+    {{- with .Values.serviceAnnotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.metrics.enabled (eq .Values.metrics.source "service") }}
+    {{- include "generic.metrics" . | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "generic.labels" . | nindent 4 }}
+    {{- if .Values.extraServiceLabels }}
+    {{- include "generic.extraServiceLabels" . | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  {{- if .Values.service.useAllAppPorts }}
+  {{- range $k, $v := .Values.appPorts }}
+    - name: {{ $k }}
+      targetPort: {{ $k }}
+      port: {{ $v }}
+      protocol: TCP
+  {{- end }}
+  {{ else }}
+  {{- range $k, $v := .Values.service.ports }}
+    - name: {{ $k }}
+      targetPort: {{ $k }}
+      port: {{ $v }}
+      protocol: TCP
+  {{- end }}
+  {{- end }}
+  selector:
+    {{- include "generic.labels" . | nindent 4 }}
+    {{- if .Values.extraPodLabels }}
+    {{- include "generic.extraPodLabels" . | nindent 4 }}
+    {{- end }}
+{{- end }}

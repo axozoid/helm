@@ -1,0 +1,237 @@
+## name of an application deployed with this chart
+appName: "my-app"
+
+## whether the app is using ExternalSecrets or not
+externalSecrets:
+  ## when enabled, the pods will load ALL envars from the K8s secret
+  ## created by fetching data from "AWS Secrets Manager" on the specified path
+  enabled: false
+
+  ## SecretStore configs
+  store:
+    APIversion: "v1beta1"
+    awsRegion: "DUMMY-AWS-REGION"
+    fetchRoleARN: "DUMMY-FETCH-ROLE"
+
+  ## ExternalSecret configs
+  secret:
+    APIversion: "v1beta1"
+    refreshInterval: 43200m   # 60m x 24h x 30d = 1 month
+    ## specify 'fetchAllFrom' to get multiple key-values from an external secret,
+    ## not having to worry about how many, or what these keys are
+    fetchAllFrom: ""
+    ##
+    ## 'data' is ignored when 'fetchAllFrom' is specified
+    data: []
+    ## create a K8s secret with a key 'secretKey' sourced from
+    ## AWS SecretsManager record located under path 'remoteRef.key' and property 'remoteRef.property'
+      # - secretKey: pass
+      #   remoteRef:
+      #     key: "path/to/secret"
+      #     property: password
+
+## envars to be passed through to containers
+envs:
+  # ENVAR_1: DUMMY-VALUE1
+  # ENVAR_2: DUMMY-VALUE2
+
+## load envars from an existing secret
+envsFromExistingSecret: ""
+
+## load envars from an existing configMap
+envsFromExistingConfigMap: ""
+
+# number of app replicas for deployment
+replicaCount: 1
+
+## image details
+image:
+  repository: docker.io/nginx
+  pullPolicy: Always
+  ## image tag serves as the app version
+  tag: "stable-alpine"
+
+## command to execute
+command: ""
+# command: ["/bin/sh"]
+
+## args for the command
+args: ""
+# args: ["-c", "while true; do echo hello; sleep 10;done"]
+
+## existing K8s secret name containing auth details
+imagePullSecrets: []
+  # - name: my-private-repo-secret
+
+# specify this to override name of all resources
+fullnameOverride: ""
+
+## application's service account configs
+serviceAccount:
+  ## Specifies whether a service account should be created
+  create: false
+  ## Annotations to add to the service account
+  annotations: {}
+    # eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/role-name
+  ## The name of the service account to use.
+  ## If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+## annotations to be added to pods
+podAnnotations: {}
+
+## labels to be added to pods
+extraPodLabels: {}
+  # app.kubernetes.io/page-team: frontend
+  # app.kubernetes.io/criticality: low
+
+## annotations to be added to service (ex: loadbalancer)
+serviceAnnotations: {}
+  ## Ingress is preferred to loadbalancer, unless non-http(s) or non default http(s) ports needs to be exposed
+  # external-dns.alpha.kubernetes.io/hostname: <pp_name>.<env>.drsmile.co
+  # service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+  # service.beta.kubernetes.io/aws-load-balancer-type: external
+  # service.beta.kubernetes.io/aws-load-balancer-scheme: <internal (access via VPN only)|internet-facing>
+
+## labels to be added to Service
+extraServiceLabels: {}
+  # app.kubernetes.io/page-team: frontend
+  # app.kubernetes.io/criticality: low
+
+
+## pod level security context
+podSecurityContext: {}
+  # fsGroup: 2000
+
+## container level security context
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+  # runAsGroup: 3000
+  # fsGroup: 2000
+
+## define persistent volume for the app
+persistentVolume:
+  ## whether to create a PVC
+  enabled: false
+  size: 8Gi
+  ## existing storage class
+  # storageClass: "gp2"
+  ## a claim in the same namespace
+  # existingClaim: my-pvc
+
+## list of volumes to be added to the pod
+extraVolumes: []
+  # - name: my-storage
+  #   emptyDir: {}
+
+## list of volume mounts to be added to the pod
+extraVolumeMounts: []
+  # - name: my-storage
+  #   mountPath: /data
+
+## ports on which the app container is listening on
+## format: APP_PORT_NAME: APP_PORT_NUMBER
+appPorts:
+  http: 80
+
+## how the app is accesible within the cluster
+service:
+  enabled: true
+  type: ClusterIP
+
+  ## if enabled, ALL "appPorts" will be used in Service
+  useAllAppPorts: false
+
+  ## when "useAllAppPorts: false", only ports below will be exposed via Service
+  ## format: APP_PORT_NAME: SERVICE_PORT_NUMBER
+  ports:
+    http: 8080
+
+## exposing the app to outside of the cluster
+ingress:
+  enabled: false
+  ## ingress class name
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: my-awesome-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+          ## portName must match one of the service's ports
+          portName: http
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+## metrics collection configuration
+metrics:
+  enabled: false
+  ## Service port at which metrics should be collected
+  port: "9090"
+  ## path on which the metrics are being served [default /actuator/prometheus
+  path: "/actuator/prometheus"
+  ## interval at which the prometheus should scrape the metrics [default 15s]
+  interval: "15s"
+
+livenessProbe: {}
+
+readinessProbe: {}
+
+  ## examples of probes:
+
+  ## HTTP request
+  #
+  # httpGet:
+  #   path: /healthz
+  #   port: 8080
+  #   httpHeaders:
+  #   - name: Custom-Header
+  #     value: Awesome
+  # initialDelaySeconds: 15
+  # periodSeconds: 3
+
+  ## command request
+  #
+  # exec:
+  #   command:
+  #   - cat
+  #   - /tmp/ready
+  # initialDelaySeconds: 3
+  # periodSeconds: 5
+
+  ## TCP socket request
+  #
+  # tcpSocket:
+  #   port: 8080
+  # initialDelaySeconds: 5
+  # periodSeconds: 10
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
