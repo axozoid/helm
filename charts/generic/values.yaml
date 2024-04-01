@@ -149,6 +149,10 @@ service:
 
   ## when "useAllAppPorts: false", only ports below will be exposed via Service
   ## format: APP_PORT_NAME: SERVICE_PORT_NUMBER
+  #
+  ## this means the fraffic will flow like this:
+  ##    service.ports.<SERVICE_PORT_NUMBER> -> appPorts.<APP_PORT_NUMBER>
+  ##    matching by APP_PORT_NAME
   ports:
     http: 8080
 
